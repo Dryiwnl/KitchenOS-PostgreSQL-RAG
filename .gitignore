@@ -1,0 +1,16 @@
+*.env
+.env
+.venv/
+__pycache__/
+*.py[cod]
+.vscode/settings.json
+database/*.log
+database/*.csv
+node_modules/
+dist/
+*.tsbuildinfo
+.postgres-data/
+.postgres.log
+
+
+

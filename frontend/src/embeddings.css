@@ -1,0 +1,182 @@
+.embedding-workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: 14px;
+  align-items: stretch;
+}
+
+.explorer-plot .gl-container,
+.explorer-plot canvas { cursor: grab !important; }
+.explorer-plot .gl-container:active,
+.explorer-plot canvas:active { cursor: grabbing !important; }
+
+.map-reset-button {
+  margin-left: auto;
+  border: 1px solid #c9c1b3;
+  border-radius: 8px;
+  background: #fffdf7;
+  color: #345342;
+  padding: 8px 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.map-reset-button:hover { background: #f4eee4; border-color: #a9a092; }
+
+.embedding-index {
+  height: 650px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  background: #fffdf7;
+  border: 1px solid #d8d1c4;
+  border-radius: 15px;
+}
+
+.embedding-index > div:first-child {
+  padding: 17px;
+  border-bottom: 1px solid #ddd6ca;
+  background: #ebe5d9;
+}
+
+.embedding-index h2 {
+  margin: 3px 0 8px;
+  font: 700 20px 'Lora';
+  color: #263d32;
+}
+
+.embedding-index > div:first-child > span {
+  color: #b5532b;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 1.2px;
+}
+
+.embedding-index p {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #77776e;
+  font-size: 10px;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  display: inline-block;
+  flex: 0 0 auto;
+  border-radius: 50%;
+}
+
+.dot.receita { background: #bd5a32; }
+.dot.consulta { background: #315d46; transform: rotate(45deg); border-radius: 1px; }
+
+.embedding-point-list {
+  overflow: auto;
+  padding: 8px;
+}
+
+.embedding-point-list button {
+  width: 100%;
+  border: 1px solid transparent;
+  border-bottom-color: #e7e0d5;
+  background: transparent;
+  color: #30332c;
+  padding: 10px 9px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-align: left;
+  border-radius: 8px;
+}
+
+.embedding-point-list button:hover { background: #f1ece2; }
+.embedding-point-list button.selected { background: #e1e9df; border-color: #9db3a3; }
+.embedding-point-list button span { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.embedding-point-list button small { color: #99958a; font-size: 8px; letter-spacing: .8px; text-transform: uppercase; }
+.embedding-point-list button strong { overflow: hidden; text-overflow: ellipsis; color: #35382f; font-size: 11px; white-space: nowrap; }
+
+.selected-vectors article { cursor: pointer; }
+
+.vector-legend {
+  display: block;
+}
+
+.vector-legend .selected-vectors {
+  margin-bottom: 14px;
+}
+
+.comparison-exact {
+  border-top: 1px solid #496356;
+  padding-top: 14px;
+  display: grid;
+  grid-template-columns: minmax(180px, .7fr) 190px minmax(430px, 1.6fr);
+  gap: 16px;
+  align-items: center;
+}
+
+.comparison-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.comparison-copy span {
+  color: #d59570;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 1px;
+}
+
+.comparison-copy strong {
+  font: 600 22px 'Lora';
+  color: #f7f2e7;
+}
+
+.comparison-copy small {
+  color: #aebeb4;
+  font-size: 9px;
+  line-height: 1.4;
+}
+
+.cosine-angle {
+  width: 190px;
+  height: 112px;
+  border: 1px solid #496356;
+  border-radius: 10px;
+  background: #172e25;
+}
+
+.cosine-angle text { fill: #9eafa4; font: 8px 'DM Sans'; }
+.cosine-angle .angle-value { fill: #f0a379; font: 600 16px 'Lora'; }
+.angle-vector { stroke-width: 3; stroke-linecap: round; }
+.angle-vector.first { stroke: #315d46; }
+.angle-vector.second { stroke: #bd5a32; }
+.angle-origin { fill: #f7f2e7; }
+.angle-first { fill: #315d46; stroke: #a8c1b2; stroke-width: 2; }
+.angle-second { fill: #bd5a32; stroke: #f0b392; stroke-width: 2; }
+
+.comparison-exact .comparison-values {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(150px, 1fr));
+}
+
+.comparison-exact .comparison-values div { min-width: 0; }
+
+@media (max-width: 1100px) {
+  .embedding-workspace { grid-template-columns: 1fr; }
+  .embedding-index { height: 280px; }
+  .comparison-exact { grid-template-columns: 1fr 190px; }
+  .comparison-exact .comparison-values { grid-column: 1 / 3; }
+}
+
+@media (max-width: 650px) {
+  .comparison-exact { grid-template-columns: 1fr; }
+  .comparison-exact .comparison-values { grid-column: auto; grid-template-columns: 1fr 1fr; }
+  .cosine-angle { width: 100%; }
+}
