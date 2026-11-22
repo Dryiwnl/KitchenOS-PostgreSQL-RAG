@@ -74,14 +74,32 @@ usados nesta versão do trabalho.
 
 ## Executar a aplicação
 
-Forma automática:
+### Início rápido (recomendado)
+
+No Windows, abra o PowerShell na pasta raiz do projeto e execute:
 
 ```powershell
 .\iniciar.ps1
 ```
 
-Esse script inicia o PostgreSQL exclusivo do projeto, abre backend e frontend
-em terminais separados e abre a aplicação no navegador.
+Esse único comando inicia o PostgreSQL do projeto, o backend e o frontend em
+terminais separados. Mantenha os terminais abertos enquanto estiver usando o
+sistema.
+
+Depois, acesse no navegador:
+
+```text
+http://127.0.0.1:5173
+```
+
+Se o PowerShell bloquear a execução de scripts, use:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\iniciar.ps1
+```
+
+Para encerrar a aplicação, pressione `Ctrl + C` nos terminais do backend e do
+frontend.
 
 Forma manual:
 
