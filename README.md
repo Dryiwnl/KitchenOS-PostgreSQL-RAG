@@ -105,8 +105,8 @@ Depois abra:
 - aplicação: `http://127.0.0.1:5173`;
 - documentação da API: `http://127.0.0.1:8000/docs`.
 
-O frontend nunca inventa indicadores. Se o PostgreSQL não estiver configurado,
-as telas mostram o erro de conexão e permitem tentar novamente.
+O frontend apresenta somente dados reais do PostgreSQL. Se o banco não estiver
+configurado, as telas mostram o erro de conexão e permitem tentar novamente.
 
 ## Embeddings
 

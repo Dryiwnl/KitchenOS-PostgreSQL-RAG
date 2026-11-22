@@ -74,7 +74,6 @@ class ComparacaoPontos(BaseModel):
     primeiro: str = Field(pattern=r"^(receita|consulta)-\d+$")
     segundo: str = Field(pattern=r"^(receita|consulta)-\d+$")
 
-
 def consultar(sql, parametros=(), apenas_um=False):
     """Executa um SELECT e devolve registros no formato de dicionário."""
     conexao = None
@@ -84,8 +83,14 @@ def consultar(sql, parametros=(), apenas_um=False):
             cursor.execute(sql, parametros)
             if apenas_um:
                 registro = cursor.fetchone()
-                return dict(registro) if registro else None
-            return [dict(registro) for registro in cursor.fetchall()]
+                if registro is not None:
+                    return dict(registro)
+                else:
+                    return None
+            registros = []
+            for registro in cursor.fetchall():
+                registros.append(dict(registro))
+            return registros
     except psycopg2.Error as erro:
         raise HTTPException(status_code=500, detail=str(erro)) from erro
     finally:
@@ -131,55 +136,6 @@ def inicio():
 def saude():
     resultado = consultar("SELECT current_database() AS banco;", apenas_um=True)
     return {"api": "online", "banco": resultado["banco"]}
-
-
-@app.get("/dashboard")
-def dashboard():
-    indicadores = consultar(
-        """
-        SELECT
-            (SELECT COALESCE(SUM(cr.quantidade * cr.preco_unitario), 0)
-               FROM contem_receita cr
-               JOIN pedido p ON p.cod_pedido = cr.cod_pedido
-              WHERE p.status = 'PAGO') AS faturamento,
-            (SELECT COUNT(*) FROM pedido WHERE status = 'PAGO') AS pedidos_pagos,
-            (SELECT COUNT(*) FROM produto WHERE estoque < estoque_minimo)
-                AS produtos_abaixo_minimo,
-            (SELECT COALESCE(SUM(quantidade), 0) FROM perda_estoque)
-                AS quantidade_perdida;
-        """,
-        apenas_um=True,
-    )
-    mais_vendidas = consultar(
-        """
-        SELECT r.nome,
-               SUM(cr.quantidade) AS quantidade,
-               SUM(cr.quantidade * cr.preco_unitario) AS faturamento
-          FROM receita r
-          JOIN contem_receita cr ON cr.cod_receita = r.cod_receita
-          JOIN pedido p ON p.cod_pedido = cr.cod_pedido
-         WHERE p.status = 'PAGO'
-         GROUP BY r.cod_receita, r.nome
-         ORDER BY quantidade DESC
-         LIMIT 5;
-        """
-    )
-    vendas_periodo = consultar(
-        """
-        SELECT TO_CHAR(DATE_TRUNC('month', p.data_pedido), 'YYYY-MM') AS periodo,
-               SUM(cr.quantidade * cr.preco_unitario) AS faturamento
-          FROM pedido p
-          JOIN contem_receita cr ON cr.cod_pedido = p.cod_pedido
-         WHERE p.status = 'PAGO'
-         GROUP BY DATE_TRUNC('month', p.data_pedido)
-         ORDER BY DATE_TRUNC('month', p.data_pedido);
-        """
-    )
-    return {
-        "indicadores": indicadores,
-        "receitas_mais_vendidas": mais_vendidas,
-        "vendas_por_periodo": vendas_periodo,
-    }
 
 
 @app.get("/receitas")

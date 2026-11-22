@@ -5,7 +5,6 @@ Backend em Python, FastAPI, psycopg2 e PostgreSQL.
 Funcionalidades atuais:
 
 - CRUD de categorias, fornecedores e produtos;
-- dashboard com agregações reais do banco;
 - listagens de receitas, pedidos e perdas;
 - ficha técnica com ingredientes e sub-receitas expandidas;
 - cálculo de custos pelos preços das compras mais recentes;
@@ -30,6 +29,11 @@ Na raiz do projeto:
 ## Arquivos
 
 - `conexao.py`: conexão com PostgreSQL e leitura do `.env`;
-- `api.py`: endpoints e operações SQL;
+- `api.py`: configuração principal da aplicação web;
+- `administracao.py`: rotas curtas que ligam o frontend às operações;
+- `crud.py`: funções `select`, `insert`, `update` e `delete`;
+- `metadados.py`: colunas, chaves e rótulos das 14 tabelas;
+- `consultas.py`: execução das três consultas obrigatórias;
+- `gerenciar_banco.py`: criação, carga inicial e eliminação das tabelas;
 - `embeddings.py`: geração e busca semântica;
 - `requirements.txt`: dependências Python.
