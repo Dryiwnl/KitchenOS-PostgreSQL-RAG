@@ -9,48 +9,145 @@ armazenar produtos, fornecedores, compras, receitas, clientes, pedidos e perdas
 de estoque.
 
 O banco foi mantido no nível do conteúdo apresentado nas aulas de SQL. O
-backend está sendo desenvolvido em Python e FastAPI por etapas.
+backend foi desenvolvido em Python e FastAPI, e o frontend em React e
+TypeScript.
 
 ## Arquivos importantes
 
-```text
-database/
-├── ddl/
-│   └── 01_create_tables.sql   # cria as 14 tabelas
-├── seeds/
-│   └── 02_insert_data.sql     # insere dados de exemplo
-└── queries/
-    ├── 01_custos_receitas.sql # custos por receita
-    ├── 02_vendas.sql          # vendas pagas por cliente
-    └── 03_estoque_perdas.sql  # valor das perdas de estoque
-backend/
-├── api.py                     # API e primeiros CRUDs
-├── conexao.py                 # conexão com PostgreSQL
-└── requirements.txt           # bibliotecas Python
-frontend/
-├── src/App.tsx                # telas e integração com a API
-├── src/styles.css             # identidade visual do KitchenOS
-└── package.json               # dependências React
-```
+    database/
+    ├── ddl/
+    │   ├── 01_create_tables.sql     # cria as 14 tabelas principais
+    │   ├── 02_create_embeddings.sql # cria a tabela auxiliar de vetores das receitas
+    │   └── 03_create_chat.sql       # cria a tabela auxiliar de histórico do chat
+    ├── seeds/
+    │   └── 02_insert_data.sql       # insere dados de exemplo
+    └── queries/
+        ├── 01_custos_receitas.sql   # custos por receita
+        ├── 02_vendas.sql            # vendas pagas por cliente
+        └── 03_estoque_perdas.sql    # valor das perdas de estoque
 
-## Como executar pelo pgAdmin
+    backend/
+    ├── api.py                       # API e CRUDs dinâmicos
+    ├── chat_ai.py                   # integração com Gemini e RAG
+    ├── conexao.py                   # conexão com PostgreSQL
+    ├── embeddings.py                # geração de vetores e projeção PCA 3D
+    └── requirements.txt             # bibliotecas Python
 
-1. Instale o PostgreSQL com o pgAdmin.
-2. Abra o pgAdmin.
-3. Crie um banco chamado `restaurante`.
-4. Clique com o botão direito no banco e abra **Query Tool**.
-5. Abra `database/ddl/01_create_tables.sql` e clique em **Execute**.
-6. Depois, abra `database/seeds/02_insert_data.sql` e clique em **Execute**.
-7. Para usar as telas de IA, execute também `database/ddl/02_create_embeddings.sql`
-   e `database/ddl/03_create_chat.sql`, nessa ordem.
+    frontend/
+    ├── src/App.tsx                  # telas e integração com a API
+    ├── src/styles.css             # identidade visual do KitchenOS
+    └── package.json                 # dependências React
 
-Para confirmar que os dados foram inseridos, execute:
+    iniciar.ps1                      # script automatizado de inicialização (Windows)
+    .env.example                     # modelo de configuração local
 
-```sql
-SELECT * FROM produto;
-SELECT * FROM receita;
-SELECT * FROM pedido;
-```
+## Pré-requisitos na máquina
+
+Para executar o projeto em um computador Windows novo, instale:
+
+- **PostgreSQL 16 ou superior** (com pgAdmin e Command Line Tools);
+- **Python 3.10 ou superior**;
+- **Node.js 18 ou superior (LTS)**;
+- **Git** (caso clone o repositório via terminal).
+
+## Executar a aplicação
+
+### Forma 1: Automática (recomendada)
+
+Na primeira execução, crie o arquivo `.env` a partir do modelo e adicione sua
+chave da API do Gemini (opcional, necessária apenas para o Chat IA — ou preencha
+depois pela própria tela do Chat IA):
+
+    Copy-Item .env.example .env
+
+O `.env.example` já vem pré-configurado para o banco isolado do projeto na porta
+`5433`:
+
+    DB_HOST=localhost
+    DB_PORT=5433
+    DB_NAME=restaurante
+    DB_USER=kitchenos
+    DB_PASSWORD=
+    GEMINI_API_KEY=
+
+Depois, abra o PowerShell na pasta raiz do projeto e execute:
+
+    .\iniciar.ps1
+
+*(Caso o PowerShell bloqueie a execução de scripts, rode `powershell -ExecutionPolicy Bypass -File .\iniciar.ps1`).*
+
+Na **primeira execução**, esse script localiza automaticamente o PostgreSQL
+instalado, cria o banco exclusivo do projeto em `.postgres-data` (porta `5433`),
+cria o banco `restaurante`, executa os 4 scripts `.sql`, cria a `.venv`, instala
+as dependências do backend e do frontend, baixa o modelo de embeddings e gera os
+vetores iniciais das receitas. Nas execuções seguintes, ele apenas inicia o
+banco, abre backend e frontend em terminais separados e abre
+`http://localhost:5173` no navegador.
+
+Para encerrar a aplicação, feche os terminais abertos ou pressione `Ctrl + C` em
+cada um deles.
+
+### Forma 2: Manual (usando o serviço padrão do PostgreSQL / pgAdmin)
+
+Caso prefira utilizar o serviço padrão do PostgreSQL já ativo no Windows (porta `5432`):
+
+1. **Configure o `.env`** com a porta `5432`, o usuário `postgres` e a senha
+   definida na instalação do PostgreSQL:
+
+       DB_HOST=localhost
+       DB_PORT=5432
+       DB_NAME=restaurante
+       DB_USER=postgres
+       DB_PASSWORD=sua_senha_do_postgresql
+       GEMINI_API_KEY=
+
+2. **Crie o banco e rode os scripts SQL pelo pgAdmin:**
+   1. Abra o pgAdmin e crie um banco chamado `restaurante`.
+   2. Clique com o botão direito no banco e abra **Query Tool**.
+   3. Abra e execute (`Execute / F5`), nesta ordem exata:
+      1. `database/ddl/01_create_tables.sql`
+      2. `database/seeds/02_insert_data.sql`
+      3. `database/ddl/02_create_embeddings.sql`
+      4. `database/ddl/03_create_chat.sql`
+
+   Para confirmar que os dados foram inseridos, execute:
+
+       SELECT * FROM produto;
+       SELECT * FROM receita;
+       SELECT * FROM pedido;
+
+3. **Instale as dependências e gere os embeddings (apenas na primeira vez):**
+
+       py -m venv .venv
+       .\.venv\Scripts\python.exe -m pip install --upgrade pip
+       .\.venv\Scripts\python.exe -m pip install -r backend\requirements.txt
+       .\.venv\Scripts\python.exe -c "from backend.embeddings import gerar_embeddings; gerar_embeddings()"
+
+   *(Caso o launcher `py` não esteja disponível, use `python -m venv .venv` na primeira linha).*
+
+       cd frontend
+       npm install
+       cd ..
+
+4. **Abra dois terminais na pasta raiz do projeto para iniciar os servidores:**
+
+   Terminal do backend:
+
+       $env:PGCLIENTENCODING="UTF8"
+       .\.venv\Scripts\python.exe -m uvicorn backend.api:app --reload
+
+   Terminal do frontend:
+
+       cd frontend
+       npm run dev
+
+Depois abra:
+
+- aplicação: `http://localhost:5173`;
+- documentação da API: `[http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)`.
+
+O frontend nunca inventa indicadores. Se o PostgreSQL não estiver configurado,
+as telas mostram o erro de conexão e permitem tentar novamente.
 
 ## O que existe no arquivo de criação
 
@@ -71,115 +168,6 @@ os preços das compras mais recentes.
 O estoque é armazenado diretamente em `produto`. Não há atualização automática
 após uma compra, perda ou venda. Essa automação exigiria conteúdos que não foram
 usados nesta versão do trabalho.
-
-## Executar a aplicação
-
-### Instalação inicial em outro computador
-
-Estas etapas são necessárias somente na primeira execução. No Windows, instale:
-
-- [Python](https://www.python.org/downloads/) e marque a opção **Add Python to PATH**;
-- [Node.js LTS](https://nodejs.org/);
-- [PostgreSQL com pgAdmin](https://www.postgresql.org/download/windows/);
-- Git, caso o projeto seja baixado com `git clone`.
-
-Abra o PowerShell na pasta raiz do projeto e instale as dependências do backend:
-
-```powershell
-python -m venv .venv
-.\.venv\Scripts\python.exe -m pip install --upgrade pip
-.\.venv\Scripts\python.exe -m pip install -r backend\requirements.txt
-```
-
-Instale as dependências do frontend:
-
-```powershell
-cd frontend
-npm install
-cd ..
-```
-
-Crie a configuração local:
-
-```powershell
-Copy-Item .env.example .env
-```
-
-Abra o arquivo `.env` e informe a senha definida durante a instalação do
-PostgreSQL. Uma instalação padrão fica assim:
-
-```dotenv
-DB_HOST=localhost
-DB_PORT=5432
-DB_NAME=restaurante
-DB_USER=postgres
-DB_PASSWORD=sua_senha_do_postgresql
-GEMINI_API_KEY=
-```
-
-No pgAdmin, crie um banco chamado `restaurante`. Abra o **Query Tool** desse
-banco e execute estes arquivos, nesta ordem:
-
-1. `database/ddl/01_create_tables.sql`;
-2. `database/seeds/02_insert_data.sql`;
-3. `database/ddl/02_create_embeddings.sql`;
-4. `database/ddl/03_create_chat.sql`.
-
-A chave do Gemini é opcional e necessária apenas para a aba **Chat IA**. Nunca
-envie o arquivo `.env` para o GitHub.
-
-### Início rápido (recomendado)
-
-No Windows, abra o PowerShell na pasta raiz do projeto e execute:
-
-```powershell
-.\iniciar.ps1
-```
-
-Esse comando verifica a conexão com o PostgreSQL e inicia o backend e o frontend
-em terminais separados. Mantenha os terminais abertos enquanto estiver usando
-o sistema. Em uma instalação padrão, o serviço do PostgreSQL deve estar em
-execução.
-
-Depois, acesse no navegador:
-
-```text
-http://127.0.0.1:5173
-```
-
-Se o PowerShell bloquear a execução de scripts, use:
-
-```powershell
-powershell -ExecutionPolicy Bypass -File .\iniciar.ps1
-```
-
-Para encerrar a aplicação, pressione `Ctrl + C` nos terminais do backend e do
-frontend.
-
-Forma manual:
-
-Abra dois terminais no VS Code.
-
-Terminal do backend:
-
-```powershell
-.\.venv\Scripts\python.exe -m uvicorn backend.api:app --reload
-```
-
-Terminal do frontend:
-
-```powershell
-cd frontend
-npm run dev -- --host 127.0.0.1
-```
-
-Depois abra:
-
-- aplicação: `http://127.0.0.1:5173`;
-- documentação da API: `http://127.0.0.1:8000/docs`.
-
-O frontend apresenta somente dados reais do PostgreSQL. Se o banco não estiver
-configurado, as telas mostram o erro de conexão e permitem tentar novamente.
 
 ## Embeddings
 

@@ -12,7 +12,16 @@ from backend.conexao import carregar_configuracao, conectar
 from backend.embeddings import buscar_receitas, carregar_modelo
 
 
-MODELO_LLM = "gemini-3.5-flash-lite"
+MODELOS_FALLBACK = [
+    "gemini-3.8-flash",
+    "gemini-3.5-flash-lite",
+    "gemini-3.5-flash",
+    "gemini-3.1-flash-lite",
+    "gemini-2.5-flash",
+    "gemini-2.5-flash-lite",
+    "gemini-flash-latest",
+]
+MODELO_LLM = MODELOS_FALLBACK[0]
 TABELAS_CONTEXTO = (
     "categoria", "fornecedor", "produto", "compra", "item_compra",
     "nota_fiscal", "receita", "utiliza", "inclui", "cliente",
@@ -57,11 +66,7 @@ def contexto_do_banco():
 
 
 def gerar_texto_gemini(api_key, prompt):
-    """Usa a API REST oficial com timeout; evita chamadas que ficam penduradas."""
-    url = (
-        "https://generativelanguage.googleapis.com/v1beta/models/"
-        f"{MODELO_LLM}:generateContent"
-    )
+    """Usa a API REST oficial com fallback automático entre modelos e timeout."""
     corpo = {
         "systemInstruction": {
             "parts": [{
@@ -77,35 +82,54 @@ def gerar_texto_gemini(api_key, prompt):
         "contents": [{"role": "user", "parts": [{"text": prompt}]}],
         "generationConfig": {"maxOutputTokens": 1200},
     }
-    try:
-        resposta = requests.post(
-            url,
-            headers={"x-goog-api-key": api_key, "Content-Type": "application/json"},
-            json=corpo,
-            timeout=(10, 60),
+
+    ultimo_erro = "Nenhum modelo disponível."
+    for modelo in MODELOS_FALLBACK:
+        url = (
+            "https://generativelanguage.googleapis.com/v1beta/models/"
+            f"{modelo}:generateContent"
         )
-    except requests.Timeout as erro:
-        raise RuntimeError("O Gemini demorou mais de 60 segundos para responder.") from erro
-    except requests.RequestException as erro:
-        raise RuntimeError("Não foi possível conectar à API do Gemini.") from erro
-
-    if not resposta.ok:
         try:
-            detalhe = resposta.json().get("error", {}).get("message", "")
-        except ValueError:
-            detalhe = ""
-        mensagem = detalhe or f"erro HTTP {resposta.status_code}"
-        raise RuntimeError(f"O Gemini recusou a solicitação: {mensagem}")
+            resposta = requests.post(
+                url,
+                headers={"x-goog-api-key": api_key, "Content-Type": "application/json"},
+                json=corpo,
+                timeout=(10, 60),
+            )
+        except requests.Timeout:
+            ultimo_erro = "O Gemini demorou mais de 60 segundos para responder."
+            continue
+        except requests.RequestException:
+            ultimo_erro = "Não foi possível conectar à API do Gemini."
+            continue
 
-    dados = resposta.json()
-    try:
-        partes = dados["candidates"][0]["content"]["parts"]
-        texto = "".join(parte.get("text", "") for parte in partes).strip()
-    except (KeyError, IndexError, TypeError) as erro:
-        raise RuntimeError("O Gemini respondeu sem conteúdo de texto.") from erro
-    if not texto:
-        raise RuntimeError("O Gemini respondeu sem conteúdo de texto.")
-    return texto
+        if not resposta.ok:
+            try:
+                detalhe = resposta.json().get("error", {}).get("message", "")
+            except ValueError:
+                detalhe = ""
+            ultimo_erro = detalhe or f"erro HTTP {resposta.status_code}"
+            if (
+                resposta.status_code in (404, 429, 503)
+                or "high demand" in ultimo_erro.lower()
+                or "no longer available" in ultimo_erro.lower()
+            ):
+                continue
+            raise RuntimeError(f"O Gemini recusou a solicitação: {ultimo_erro}")
+
+        dados = resposta.json()
+        try:
+            partes = dados["candidates"][0]["content"]["parts"]
+            texto = "".join(parte.get("text", "") for parte in partes).strip()
+        except (KeyError, IndexError, TypeError):
+            ultimo_erro = "O Gemini respondeu sem conteúdo de texto."
+            continue
+
+        if texto:
+            return texto
+        ultimo_erro = "O Gemini respondeu sem conteúdo de texto."
+
+    raise RuntimeError(f"O Gemini recusou a solicitação: {ultimo_erro}")
 
 
 def responder(pergunta):

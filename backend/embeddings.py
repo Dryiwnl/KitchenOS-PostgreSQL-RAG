@@ -18,7 +18,7 @@ PESO_RELACOES = 0.35
 
 @lru_cache(maxsize=1)
 def carregar_modelo():
-    return SentenceTransformer(MODELO, local_files_only=True)
+    return SentenceTransformer(MODELO, local_files_only=False)
 
 #Função que coleta todos os textos de receitas para futuramente gerar os embeddings
 def documentos_das_receitas():

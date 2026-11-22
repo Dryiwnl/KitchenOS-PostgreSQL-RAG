@@ -4,8 +4,9 @@
 **Professor:** Alexandre Leopoldo Gonçalves  
 **Instituição:** Universidade Federal de Santa Catarina — Campus Araranguá  
 **Semestre:** 2026.2  
-**Integrante(s):** preencher antes da entrega  
-**Data:** novembro de 2026
+**Integrantes:** Eduardo Kuhnen Winter (24201389) e Matheus Viganó Schirrmann (24204371)  
+**Data:** 22 de novembro de 2026  
+**Repositório GitHub:** https://github.com/Dryiwnl/KitchenOS-PostgreSQL-RAG
 
 ## Sumário
 
@@ -70,11 +71,11 @@ consultas acadêmicas devem executar SQL real, exibir os dados em tabela e gerar
 gráficos. O painel principal reúne essas operações em uma interface web.
 
 Para integrar IA, as receitas são convertidas em embeddings multilíngues de 384
-dimensões. A busca semântica usa similaridade de cosseno, e uma projeção PCA
-permite explorar visualmente as relações entre receitas e perguntas. O chat com
-Gemini recebe uma cópia controlada dos dados e não tem permissão para executar
-SQL ou alterar o banco. Perguntas, respostas e referências recuperadas são
-armazenadas para auditoria.
+dimensões (`paraphrase-multilingual-MiniLM-L12-v2`). A busca semântica usa
+similaridade de cosseno, e uma projeção PCA permite explorar visualmente as
+relações entre receitas e perguntas. O chat integrado à API do Google Gemini (com fallback automático entre modelos da família Flash) recebe uma cópia controlada dos dados e não tem permissão
+para executar SQL ou alterar o banco. Perguntas, respostas e referências
+recuperadas são armazenadas para auditoria.
 
 Requisitos não funcionais importantes incluem integridade referencial,
 validação de quantidades e valores, preservação de credenciais fora do Git,
@@ -151,7 +152,7 @@ xychart-beta
 
 **Objetivo:** consolidar a quantidade perdida por produto e estimar seu valor
 com o preço médio de compra. A consulta envolve `perda_estoque`, `produto` e
-`item_compra`, usando `AVG`, `SUM` e `MAX`.
+`item_compra`, usando `AVG` e `SUM`.
 
 SQL: [`03_estoque_perdas.sql`](../database/queries/03_estoque_perdas.sql)
 
@@ -185,4 +186,4 @@ A aplicação atende ao item 7 do enunciado com:
 - criação, carga inicial e eliminação protegida das tabelas;
 - embeddings reais, busca semântica, projeção PCA e chat integrado ao Gemini.
 
-As instruções de instalação e execução estão no [README principal](../README.md).
+O código-fonte completo está disponível no repositório `https://github.com/Dryiwnl/KitchenOS-PostgreSQL-RAG` e as instruções de instalação e execução estão no [README principal](../README.md).
