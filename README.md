@@ -74,6 +74,60 @@ usados nesta versão do trabalho.
 
 ## Executar a aplicação
 
+### Instalação inicial em outro computador
+
+Estas etapas são necessárias somente na primeira execução. No Windows, instale:
+
+- [Python](https://www.python.org/downloads/) e marque a opção **Add Python to PATH**;
+- [Node.js LTS](https://nodejs.org/);
+- [PostgreSQL com pgAdmin](https://www.postgresql.org/download/windows/);
+- Git, caso o projeto seja baixado com `git clone`.
+
+Abra o PowerShell na pasta raiz do projeto e instale as dependências do backend:
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install --upgrade pip
+.\.venv\Scripts\python.exe -m pip install -r backend\requirements.txt
+```
+
+Instale as dependências do frontend:
+
+```powershell
+cd frontend
+npm install
+cd ..
+```
+
+Crie a configuração local:
+
+```powershell
+Copy-Item .env.example .env
+```
+
+Abra o arquivo `.env` e informe a senha definida durante a instalação do
+PostgreSQL. Uma instalação padrão fica assim:
+
+```dotenv
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=restaurante
+DB_USER=postgres
+DB_PASSWORD=sua_senha_do_postgresql
+GEMINI_API_KEY=
+```
+
+No pgAdmin, crie um banco chamado `restaurante`. Abra o **Query Tool** desse
+banco e execute estes arquivos, nesta ordem:
+
+1. `database/ddl/01_create_tables.sql`;
+2. `database/seeds/02_insert_data.sql`;
+3. `database/ddl/02_create_embeddings.sql`;
+4. `database/ddl/03_create_chat.sql`.
+
+A chave do Gemini é opcional e necessária apenas para a aba **Chat IA**. Nunca
+envie o arquivo `.env` para o GitHub.
+
 ### Início rápido (recomendado)
 
 No Windows, abra o PowerShell na pasta raiz do projeto e execute:
@@ -82,9 +136,10 @@ No Windows, abra o PowerShell na pasta raiz do projeto e execute:
 .\iniciar.ps1
 ```
 
-Esse único comando inicia o PostgreSQL do projeto, o backend e o frontend em
-terminais separados. Mantenha os terminais abertos enquanto estiver usando o
-sistema.
+Esse comando verifica a conexão com o PostgreSQL e inicia o backend e o frontend
+em terminais separados. Mantenha os terminais abertos enquanto estiver usando
+o sistema. Em uma instalação padrão, o serviço do PostgreSQL deve estar em
+execução.
 
 Depois, acesse no navegador:
 
@@ -115,7 +170,7 @@ Terminal do frontend:
 
 ```powershell
 cd frontend
-npm run dev
+npm run dev -- --host 127.0.0.1
 ```
 
 Depois abra:
