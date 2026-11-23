@@ -1,6 +1,6 @@
--- Consulta 3: quantidade total perdida por produto.
--- Tabelas: perda_estoque e produto.
--- Agregacao: soma das quantidades perdidas.
+-- Consulta 3: quantidade total perdida e prejuízo estimado por produto.
+-- Tabelas: perda_estoque, produto e item_compra.
+-- Agregação: soma das quantidades perdidas e média do preço unitário de compra.
 SELECT
     p.nome AS produto,
     SUM(pe.quantidade) AS quantidade_perdida,
