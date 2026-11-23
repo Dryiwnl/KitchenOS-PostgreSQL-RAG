@@ -181,8 +181,7 @@ A aplicação atende ao item 7 do enunciado com:
 - conexão com PostgreSQL por `psycopg2`;
 - CRUD genérico nas 14 tabelas, inclusive chaves compostas;
 - execução somente leitura das três consultas e gráficos de barras;
-- menu web com estoque, fichas técnicas, vendas, perdas, dados, analytics,
-  embeddings, chat e administração;
+- menu web com dashboard, dados, analytics, embeddings, chat e administração;
 - criação, carga inicial e eliminação protegida das tabelas;
 - embeddings reais, busca semântica, projeção PCA e chat integrado ao Gemini.
 
