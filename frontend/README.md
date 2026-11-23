@@ -4,7 +4,6 @@ Interface React + TypeScript com identidade editorial de restaurante.
 
 Funcionalidades atuais:
 
-- dashboard com indicadores e gráficos reais;
 - estoque com cadastro, edição e exclusão de produtos;
 - fichas técnicas completas com custos e sub-receitas;
 - chat com IA (RAG) integrado ao Gemini com configuração local da chave;

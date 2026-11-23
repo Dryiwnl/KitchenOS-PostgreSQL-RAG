@@ -20,11 +20,12 @@ PESO_RELACOES = 0.35
 def carregar_modelo():
     return SentenceTransformer(MODELO, local_files_only=False)
 
-
+#Função que coleta todos os textos de receitas para futuramente gerar os embeddings
 def documentos_das_receitas():
     """Monta facetas curtas e inclui relações indiretas entre receitas."""
     with conectar() as conexao:
         with conexao.cursor(cursor_factory=RealDictCursor) as cursor:
+            #Consulta as receitas, colocando na lista receitas
             cursor.execute(
                 """
                 SELECT r.cod_receita, r.nome, c.nome AS categoria, r.modo_preparo
@@ -34,6 +35,8 @@ def documentos_das_receitas():
                 """
             )
             receitas = {int(r["cod_receita"]): dict(r) for r in cursor.fetchall()}
+
+            #Consulta os ingredientes em cada receita, colocando na lista ingredientes_diretos
             cursor.execute(
                 """
                 SELECT u.cod_receita, p.nome
@@ -45,6 +48,7 @@ def documentos_das_receitas():
             ingredientes_diretos = {codigo: [] for codigo in receitas}
             for registro in cursor.fetchall():
                 ingredientes_diretos[int(registro["cod_receita"])].append(registro["nome"])
+            #Consulta as sub-receitas, colocando na lista subreceitas_diretas
             cursor.execute(
                 """
                 SELECT cod_receita, cod_subreceita

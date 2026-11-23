@@ -5,9 +5,7 @@ import {
   BookOpen,
   Boxes,
   ChefHat,
-  CircleDollarSign,
   Database,
-  LayoutDashboard,
   PackagePlus,
   Pencil,
   Orbit,
@@ -15,12 +13,8 @@ import {
   Search,
   ShoppingBag,
   Trash2,
-  TrendingUp,
-  Users,
 } from "lucide-react";
 import {
-  Area,
-  AreaChart,
   Bar,
   BarChart,
   CartesianGrid,
@@ -37,7 +31,7 @@ import { acompanharPonteiro, alternarSelecao, concluirClique, iniciarClique, typ
 
 const API = "http://127.0.0.1:8000";
 
-type Pagina = "dashboard" | "estoque" | "receitas" | "descoberta" | "explorer" | "vendas" | "perdas" | "analytics" | "dados" | "admin";
+type Pagina = "estoque" | "receitas" | "descoberta" | "explorer" | "vendas" | "perdas" | "analytics" | "dados" | "admin";
 type Registro = Record<string, string | number | null>;
 
 type Produto = {
@@ -47,17 +41,6 @@ type Produto = {
   unidade_medida: string;
   estoque_minimo: number;
   fator_correcao: number;
-};
-
-type Dashboard = {
-  indicadores: {
-    faturamento: number;
-    pedidos_pagos: number;
-    produtos_abaixo_minimo: number;
-    quantidade_perdida: number;
-  };
-  receitas_mais_vendidas: Registro[];
-  vendas_por_periodo: Registro[];
 };
 
 type Ficha = {
@@ -98,32 +81,6 @@ function EstadoErro({ mensagem, tentar }: { mensagem: string; tentar: () => void
       <button className="button secondary" onClick={tentar}><RefreshCw size={16} /> Tentar novamente</button>
     </div>
   );
-}
-
-function DashboardPage() {
-  const [dados, setDados] = useState<Dashboard | null>(null);
-  const [erro, setErro] = useState("");
-  const carregar = () => {
-    setErro("");
-    api<Dashboard>("/dashboard").then(setDados).catch((e) => setErro(e.message));
-  };
-  useEffect(() => { void carregar(); }, []);
-  if (erro) return <EstadoErro mensagem={erro} tentar={carregar} />;
-  if (!dados) return <div className="loading">Carregando indicadores...</div>;
-  const cards = [
-    ["Faturamento", moeda(dados.indicadores.faturamento), CircleDollarSign, "green"],
-    ["Pedidos pagos", dados.indicadores.pedidos_pagos, ShoppingBag, "orange"],
-    ["Estoque crítico", dados.indicadores.produtos_abaixo_minimo, Boxes, "red"],
-    ["Perdas registradas", Number(dados.indicadores.quantidade_perdida).toFixed(3), AlertTriangle, "purple"],
-  ] as const;
-  return <>
-    <div className="page-heading"><div><span className="eyebrow">VISÃO GERAL</span><h1>Dashboard operacional</h1><p>Indicadores calculados diretamente no PostgreSQL.</p></div><div className="live"><span /> Dados reais</div></div>
-    <div className="metric-grid">{cards.map(([titulo, valor, Icone, cor]) => <article className="metric" key={titulo}><div className={`metric-icon ${cor}`}><Icone size={20}/></div><span>{titulo}</span><strong>{valor}</strong><small>Base atual do restaurante</small></article>)}</div>
-    <div className="chart-grid">
-      <article className="panel"><div className="panel-title"><div><span>DESEMPENHO</span><h2>Faturamento mensal</h2></div><TrendingUp size={20}/></div><div className="chart"><ResponsiveContainer><AreaChart data={dados.vendas_por_periodo}><defs><linearGradient id="orange" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#ff7a1a" stopOpacity={.5}/><stop offset="100%" stopColor="#ff7a1a" stopOpacity={0}/></linearGradient></defs><CartesianGrid stroke="#242428" vertical={false}/><XAxis dataKey="periodo" stroke="#74747e"/><YAxis stroke="#74747e"/><Tooltip contentStyle={{background:"#151518",border:"1px solid #2a2a30"}} formatter={(v) => moeda(v)}/><Area type="monotone" dataKey="faturamento" stroke="#ff7a1a" fill="url(#orange)" strokeWidth={3}/></AreaChart></ResponsiveContainer></div></article>
-      <article className="panel"><div className="panel-title"><div><span>POPULARIDADE</span><h2>Receitas mais vendidas</h2></div><BarChart3 size={20}/></div><div className="chart"><ResponsiveContainer><BarChart data={dados.receitas_mais_vendidas} layout="vertical"><CartesianGrid stroke="#242428" horizontal={false}/><XAxis type="number" stroke="#74747e"/><YAxis type="category" dataKey="nome" width={120} stroke="#aaaab3"/><Tooltip contentStyle={{background:"#151518",border:"1px solid #2a2a30"}}/><Bar dataKey="quantidade" fill="#ff7a1a" radius={[0,6,6,0]}/></BarChart></ResponsiveContainer></div></article>
-    </div>
-  </>;
 }
 
 const produtoVazio = { cod_produto: 0, nome: "", estoque: 0, unidade_medida: "kg", estoque_minimo: 0, fator_correcao: 1 };
@@ -430,10 +387,10 @@ function AdministracaoPage(){
 }
 
 const menu = [
-  ["dashboard","Dashboard",LayoutDashboard], ["estoque","Estoque",Boxes], ["receitas","Fichas técnicas",ChefHat], ["descoberta","Chat IA",Search], ["explorer","Embeddings",Orbit], ["vendas","Vendas",ShoppingBag], ["perdas","Perdas",AlertTriangle], ["analytics","Analytics SQL",BarChart3], ["dados","CRUD 14 tabelas",Database], ["admin","Administrar banco",Trash2],
+  ["estoque","Estoque",Boxes], ["receitas","Fichas técnicas",ChefHat], ["descoberta","Chat IA",Search], ["vendas","Vendas",ShoppingBag], ["perdas","Perdas",AlertTriangle], ["analytics","Analytics SQL",BarChart3], ["dados","CRUD 14 tabelas",Database], ["admin","Administrar banco",Trash2],
 ] as const;
 
 export default function App() {
-  const [pagina,setPagina]=useState<Pagina>("dashboard");
-  return <div className="app-shell"><aside><div className="brand"><div><ChefHat size={23}/></div><span>Kitchen<strong>OS</strong></span></div><nav>{menu.map(([id,nome,Icone])=><button key={id} className={pagina===id?"active":""} onClick={()=>setPagina(id)}><Icone size={18}/><span>{nome}</span></button>)}</nav><div className="sidebar-foot"><Users size={17}/><div><strong>Restaurante</strong><small>Ambiente local</small></div></div></aside><main>{pagina==="dashboard"&&<DashboardPage/>}{pagina==="estoque"&&<EstoquePage/>}{pagina==="receitas"&&<ReceitasPage/>}{pagina==="descoberta"&&<ChatAIPage/>}{pagina==="explorer"&&<EmbeddingsPage/>}{pagina==="vendas"&&<TabelaPage titulo="Vendas" subtitulo="Pedidos e valores registrados." endpoint="/pedidos" colunas={[["cod_pedido","Pedido"],["cliente","Cliente"],["forma_pagamento","Pagamento"],["status","Status"],["total","Total"]]}/>} {pagina==="perdas"&&<TabelaPage titulo="Perdas de estoque" subtitulo="Histórico de desperdícios registrados." endpoint="/perdas" colunas={[["data","Data"],["produto","Produto"],["quantidade","Quantidade"],["unidade_medida","Unidade"],["motivo","Motivo"]]}/>} {pagina==="analytics"&&<AnalyticsPage/>}{pagina==="dados"&&<CrudGeralPage/>}{pagina==="admin"&&<AdministracaoPage/>}</main></div>;
+  const [pagina,setPagina]=useState<Pagina>("estoque");
+  return <div className="app-shell"><aside><div className="brand"><div><ChefHat size={23}/></div><span>Kitchen<strong>OS</strong></span></div><nav>{menu.map(([id,nome,Icone])=><button key={id} className={pagina===id?"active":""} onClick={()=>setPagina(id)}><Icone size={18}/><span>{nome}</span></button>)}</nav><button type="button" className={`embedding-shortcut ${pagina==="explorer"?"active":""}`} onClick={()=>setPagina("explorer")} title="Embeddings" aria-label="Abrir embeddings"><Orbit size={20}/></button></aside><main>{pagina==="estoque"&&<EstoquePage/>}{pagina==="receitas"&&<ReceitasPage/>}{pagina==="descoberta"&&<ChatAIPage/>}{pagina==="explorer"&&<EmbeddingsPage/>}{pagina==="vendas"&&<TabelaPage titulo="Vendas" subtitulo="Pedidos e valores registrados." endpoint="/pedidos" colunas={[["cod_pedido","Pedido"],["cliente","Cliente"],["forma_pagamento","Pagamento"],["status","Status"],["total","Total"]]}/>} {pagina==="perdas"&&<TabelaPage titulo="Perdas de estoque" subtitulo="Histórico de desperdícios registrados." endpoint="/perdas" colunas={[["data","Data"],["produto","Produto"],["quantidade","Quantidade"],["unidade_medida","Unidade"],["motivo","Motivo"]]}/>} {pagina==="analytics"&&<AnalyticsPage/>}{pagina==="dados"&&<CrudGeralPage/>}{pagina==="admin"&&<AdministracaoPage/>}</main></div>;
 }
