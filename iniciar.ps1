@@ -76,29 +76,41 @@ if (-not (Test-Path (Join-Path $frontendDir "node_modules"))) {
     Pop-Location
 }
 
-# 8. Abre backend e frontend em terminais separados
-Start-Process -FilePath "powershell.exe" -WorkingDirectory $raiz `
-    -ArgumentList "-NoExit", "-Command", `
-    '$env:PGCLIENTENCODING="UTF8"; .\.venv\Scripts\python.exe -m uvicorn backend.api:app --reload'
+function Testar-Endereco([string]$url) {
+    try {
+        Invoke-WebRequest -UseBasicParsing -Uri $url -TimeoutSec 2 | Out-Null
+        return $true
+    }
+    catch {
+        return $false
+    }
+}
 
-Start-Process -FilePath "powershell.exe" -WorkingDirectory $frontendDir `
-    -ArgumentList "-NoExit", "-Command", "npm run dev"
+# 8. Abre apenas os processos que ainda não estiverem ativos.
+if (-not (Testar-Endereco "http://127.0.0.1:8000/")) {
+    Start-Process -FilePath "powershell.exe" -WorkingDirectory $raiz `
+        -ArgumentList "-NoExit", "-Command", `
+        '$env:PGCLIENTENCODING="UTF8"; .\.venv\Scripts\python.exe -m uvicorn backend.api:app --reload'
+}
+
+if (-not (Testar-Endereco "http://127.0.0.1:5173/")) {
+    Start-Process -FilePath "powershell.exe" -WorkingDirectory $frontendDir `
+        -ArgumentList "-NoExit", "-Command", `
+        "npm run dev -- --host 127.0.0.1 --strictPort"
+}
 
 # 9. Aguarda a API responder e abre o navegador em localhost
 $apiPronta = $false
 for ($tentativa = 0; $tentativa -lt 30; $tentativa++) {
-    try {
-        Invoke-WebRequest -UseBasicParsing -Uri "http://127.0.0.1:8000/" -TimeoutSec 1 | Out-Null
+    if (Testar-Endereco "http://127.0.0.1:8000/produtos") {
         $apiPronta = $true
         break
     }
-    catch {
-        Start-Sleep -Seconds 1
-    }
+    Start-Sleep -Seconds 1
 }
 
 if (-not $apiPronta) {
-    Write-Warning "O backend ainda não respondeu. Consulte o terminal aberto."
+    throw "O backend não conseguiu consultar o banco. Consulte o terminal aberto."
 }
 
 Start-Process "http://localhost:5173"
