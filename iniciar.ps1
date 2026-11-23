@@ -22,16 +22,32 @@ if (-not (Test-Path $envFile) -and (Test-Path $envExample)) {
     Write-Host "Arquivo .env criado a partir do .env.example."
 }
 
+function Ler-Env([string]$nome, [string]$padrao) {
+    $linha = Get-Content $envFile |
+        Where-Object { $_ -match "^$([regex]::Escape($nome))=" } |
+        Select-Object -First 1
+    if ($linha) {
+        return ($linha -split "=", 2)[1].Trim()
+    }
+    return $padrao
+}
+
+$dbHost = Ler-Env "DB_HOST" "127.0.0.1"
+$dbPort = Ler-Env "DB_PORT" "5433"
+$dbUser = Ler-Env "DB_USER" "kitchenos"
+$dbName = Ler-Env "DB_NAME" "restaurante"
+
 # 3. Inicializa o banco exclusivo do projeto na primeira execução
 $primeiraVezBanco = -not (Test-Path $dados)
 if ($primeiraVezBanco) {
     Write-Host "Inicializando banco de dados local em .postgres-data..."
-    & (Join-Path $pgBin "initdb.exe") -D $dados -U kitchenos --encoding=UTF8 --no-locale -A trust
-    Add-Content -Path (Join-Path $dados "postgresql.conf") -Value "`nport = 5433`nlisten_addresses = '127.0.0.1'"
+    & (Join-Path $pgBin "initdb.exe") -D $dados -U $dbUser --encoding=UTF8 --no-locale -A trust
+    Add-Content -Path (Join-Path $dados "postgresql.conf") `
+        -Value "`nport = $dbPort`nlisten_addresses = '$dbHost'"
 }
 
 # 4. Inicia o PostgreSQL exclusivo na porta 5433 se ainda não estiver rodando
-& (Join-Path $pgBin "pg_isready.exe") -h 127.0.0.1 -p 5433 | Out-Null
+& (Join-Path $pgBin "pg_isready.exe") -h $dbHost -p $dbPort | Out-Null
 if ($LASTEXITCODE -ne 0) {
     & (Join-Path $pgBin "pg_ctl.exe") -D $dados -l $log start
 }
@@ -39,11 +55,11 @@ if ($LASTEXITCODE -ne 0) {
 # 5. Cria o banco 'restaurante' e roda DDL + Seeds na primeira execução
 if ($primeiraVezBanco) {
     Write-Host "Criando banco 'restaurante' e populando tabelas iniciais..."
-    & (Join-Path $pgBin "createdb.exe") -h 127.0.0.1 -p 5433 -U kitchenos restaurante
-    & (Join-Path $pgBin "psql.exe") -h 127.0.0.1 -p 5433 -U kitchenos -d restaurante -f (Join-Path $raiz "database\ddl\01_create_tables.sql")
-    & (Join-Path $pgBin "psql.exe") -h 127.0.0.1 -p 5433 -U kitchenos -d restaurante -f (Join-Path $raiz "database\seeds\02_insert_data.sql")
-    & (Join-Path $pgBin "psql.exe") -h 127.0.0.1 -p 5433 -U kitchenos -d restaurante -f (Join-Path $raiz "database\ddl\02_create_embeddings.sql")
-    & (Join-Path $pgBin "psql.exe") -h 127.0.0.1 -p 5433 -U kitchenos -d restaurante -f (Join-Path $raiz "database\ddl\03_create_chat.sql")
+    & (Join-Path $pgBin "createdb.exe") -h $dbHost -p $dbPort -U $dbUser $dbName
+    & (Join-Path $pgBin "psql.exe") -h $dbHost -p $dbPort -U $dbUser -d $dbName -f (Join-Path $raiz "database\ddl\01_create_tables.sql")
+    & (Join-Path $pgBin "psql.exe") -h $dbHost -p $dbPort -U $dbUser -d $dbName -f (Join-Path $raiz "database\seeds\02_insert_data.sql")
+    & (Join-Path $pgBin "psql.exe") -h $dbHost -p $dbPort -U $dbUser -d $dbName -f (Join-Path $raiz "database\ddl\02_create_embeddings.sql")
+    & (Join-Path $pgBin "psql.exe") -h $dbHost -p $dbPort -U $dbUser -d $dbName -f (Join-Path $raiz "database\ddl\03_create_chat.sql")
 }
 
 # 6. Cria a .venv e instala dependências Python se não existir
@@ -88,18 +104,23 @@ function Testar-Endereco([string]$url) {
 
 # 8. Abre apenas os processos que ainda não estiverem ativos.
 if (-not (Testar-Endereco "http://127.0.0.1:8000/")) {
-    Start-Process -FilePath "powershell.exe" -WorkingDirectory $raiz `
-        -ArgumentList "-NoExit", "-Command", `
-        '$env:PGCLIENTENCODING="UTF8"; .\.venv\Scripts\python.exe -m uvicorn backend.api:app --reload'
+    Start-Process -FilePath "cmd.exe" -WorkingDirectory $raiz `
+        -ArgumentList "/k", `
+        "set PGCLIENTENCODING=UTF8&& .\.venv\Scripts\python.exe -m uvicorn backend.api:app --reload"
 }
 
 if (-not (Testar-Endereco "http://127.0.0.1:5173/")) {
-    Start-Process -FilePath "powershell.exe" -WorkingDirectory $frontendDir `
-        -ArgumentList "-NoExit", "-Command", `
+    Start-Process -FilePath "cmd.exe" -WorkingDirectory $frontendDir `
+        -ArgumentList "/k", `
         "npm run dev -- --host 127.0.0.1 --strictPort"
 }
+else {
+    Start-Process -FilePath "cmd.exe" -WorkingDirectory $frontendDir `
+        -ArgumentList "/k", `
+        "title KitchenOS Frontend && echo KitchenOS ja esta rodando em: http://127.0.0.1:5173"
+}
 
-# 9. Aguarda a API responder e abre o navegador em localhost
+# 9. Aguarda a API consultar o banco com sucesso.
 $apiPronta = $false
 for ($tentativa = 0; $tentativa -lt 30; $tentativa++) {
     if (Testar-Endereco "http://127.0.0.1:8000/produtos") {
@@ -113,4 +134,4 @@ if (-not $apiPronta) {
     throw "O backend não conseguiu consultar o banco. Consulte o terminal aberto."
 }
 
-Start-Process "http://localhost:5173"
+Write-Host "KitchenOS pronto: http://127.0.0.1:5173"

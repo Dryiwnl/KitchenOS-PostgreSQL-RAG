@@ -81,8 +81,8 @@ instalado, cria o banco exclusivo do projeto em `.postgres-data` (porta `5433`),
 cria o banco `restaurante`, executa os 4 scripts `.sql`, cria a `.venv`, instala
 as dependências do backend e do frontend, baixa o modelo de embeddings e gera os
 vetores iniciais das receitas. Nas execuções seguintes, ele apenas inicia o
-banco, abre backend e frontend em terminais separados e abre
-`http://localhost:5173` no navegador.
+banco e abre backend e frontend em terminais CMD separados. O terminal do
+frontend mostra `http://127.0.0.1:5173`, que deve ser copiado para o navegador.
 
 Para encerrar a aplicação, feche os terminais abertos ou pressione `Ctrl + C` em
 cada um deles.
